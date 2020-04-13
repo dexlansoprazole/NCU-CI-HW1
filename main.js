@@ -1,8 +1,7 @@
 const {app, BrowserWindow, Menu, ipcMain} = require('electron')
-const path = require('path')
 if (!app.isPackaged)
   require('electron-reload')(__dirname);
-const {membershipFuncs} = require('./fuzzy');
+const {fuzzyHandle} = require('./fuzzy');
 
 let mainWindow;
 let data = null;
@@ -84,8 +83,8 @@ function start() {
   return res;
 }
 
-function next(x, y, degree) {
-  let theta = toRadians(0);
+function next(x, y, degree, sensors) {
+  let theta = toRadians(fuzzyHandle(sensors));
   let radian = toRadians(degree);
   x = x + Math.cos(radian + theta) + Math.sin(radian) * Math.sin(theta);
   y = y + Math.sin(radian + theta) - Math.cos(radian) * Math.sin(theta);
@@ -219,7 +218,7 @@ function getSensorRes(x, y, sensors) {
         intersects.push(itst);
     });
     distances = intersects.map(i => ((x - i.x) ** 2 + (y - i.y) ** 2) ** 0.5);
-    reses.push(Math.min(...distances));
+    reses.push(Math.min(...distances) - 3);
   });
   return reses;
 }
