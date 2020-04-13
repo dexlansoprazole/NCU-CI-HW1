@@ -1,9 +1,8 @@
-const { app, BrowserWindow, Menu, ipcMain } = require('electron')
+const {app, BrowserWindow, Menu, ipcMain} = require('electron')
 const path = require('path')
 if (!app.isPackaged)
-  require('electron-reload')(__dirname, {
-    electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
-  });
+  require('electron-reload')(__dirname);
+const {membershipFuncs} = require('./fuzzy');
 
 let mainWindow;
 let data = null;
