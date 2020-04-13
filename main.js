@@ -1,6 +1,9 @@
 const { app, BrowserWindow, Menu, ipcMain } = require('electron')
+const path = require('path')
 if (!app.isPackaged)
-  require('electron-reload')(__dirname);
+  require('electron-reload')(__dirname, {
+    electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
+  });
 
 let mainWindow;
 let data = null;
@@ -83,7 +86,7 @@ function start() {
 }
 
 function next(x, y, degree) {
-  let theta = toRadians(8);
+  let theta = toRadians(0);
   let radian = toRadians(degree);
   x = x + Math.cos(radian + theta) + Math.sin(radian) * Math.sin(theta);
   y = y + Math.sin(radian + theta) - Math.cos(radian) * Math.sin(theta);
