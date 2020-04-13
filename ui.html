@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>HW1</title>
+  <link href="./styles/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="styles/jquery.svg.css">
+  <link href="./styles/style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+  <div id="alert"></div>
+  <div class="container">
+    <div class="page-header">
+      <h1>CI HW1</h1>
+    </div>
+
+    <div class="row align-items-center">
+      <div class="col">
+        <div class="input-group">
+          <div class="input-group-prepend">
+              <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Map
+              </button>
+              <div id="dropdown-menu-map" class="dropdown-menu">
+              </div>
+          </div>
+          <div class="custom-file">
+            <input type="file" class="custom-file-input inputFile" id="inputFile-map">
+            <label class="custom-file-label" id="inputFile-label-map">case01.txt</label>
+          </div>
+        </div>
+      </div>
+      <div class="col-2">
+        <button id="btnStart" class="btn btn-primary btn-block" type="button">
+          Start
+        </button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col" id="col-draw-result">
+        <svg id="draw-result"></svg>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.$ = window.jQuery = require('jquery');
+    window.d3 = require('d3');
+    require("./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js");
+  </script>
+  <script type="text/javascript" src="./jquery.svg.min.js"></script>
+  <script type="text/javascript" src="./jquery.svganim.min.js"></script>
+  <script src="./ui.js"></script>
+</body>
+
+</html>
