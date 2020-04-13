@@ -5,7 +5,7 @@ const SENSOR_LENGTH = {
   right: 9
 };
 
-const setOperations = {
+const operations = {
   and: (...funcs) => {
     return (v) => {
       return Math.min(...funcs.map(func => func(v)));
@@ -89,7 +89,7 @@ const defuzzizier = (set, r) => {
 }
 
 const fuzzyHandle = (sensors) => {
-  let fuzzySet = setOperations.or(
+  let fuzzySet = operations.or(
     rules.ifCenterIsCloseThenHandleIsRight(sensors.center.val),
     rules.ifLeftIsCloseThenHandleIsRight(sensors.left.val),
     rules.ifRightIsCloseThenHandleIsLeft(sensors.right.val),

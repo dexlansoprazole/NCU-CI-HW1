@@ -72,12 +72,32 @@ function parseData(arg) {
 function start() {
   if (!data)
     return null;
+  
+  let walls = data.corners.map((c, i, a) => {
+    if (i === 0)
+      return null;
+    return [{x: a[i - 1].x, y: a[i - 1].y}, {x: c.x, y: c.y}];
+  }).slice(1, data.corners.length);
+  
+  let finishs = [
+    {x: data.finish.topLeft.x, y: data.finish.topLeft.y},
+    {x: data.finish.bottomRight.x, y: data.finish.topLeft.y},
+    {x: data.finish.bottomRight.x, y: data.finish.bottomRight.y},
+    {x: data.finish.topLeft.x, y: data.finish.bottomRight.y},
+    {x: data.finish.topLeft.x, y: data.finish.topLeft.y}
+  ].map((c, i, a) => {
+    if (i === 0)
+      return null;
+    return [{x: a[i - 1].x, y: a[i - 1].y}, {x: c.x, y: c.y}];
+  }).slice(1, 5);
+
   let res = new Array();
   let sensors = getSensors(...Object.values(data.start));
   res.push({...data.start, sensors});
   for (let i = 0; i < 100; i++){
-    let {x, y, degree} = res[res.length - 1];
-    if (isCollision(x, y) && i !== 0) break;
+    let {x, y} = res[res.length - 1];
+    if (isCollision(x, y, walls) && i !== 0) break;
+    if (isCollision(x, y, finishs)) break;
     res.push(next(...Object.values(res[res.length - 1])));
   }
   return res;
@@ -92,13 +112,8 @@ function next(x, y, degree, sensors) {
   return {x, y, degree: toDegrees(radian), sensors: getSensors(x, y, toDegrees(radian))};
 }
 
-function isCollision(x, y) {
+function isCollision(x, y, edges) {
   let res = false;
-  let edges = data.corners.map((c, i, a) => {
-    if (i === 0)
-      return null;
-    return [{x: a[i - 1].x, y: a[i - 1].y}, {x: c.x, y: c.y}];
-  }).slice(1, data.corners.length);
   edges.forEach(edge => {
     let footPoint = getFootPoint({x, y}, edge[0], edge[1]);
     if (
