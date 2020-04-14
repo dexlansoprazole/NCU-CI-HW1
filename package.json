@@ -16,20 +16,21 @@
     "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "electron": "^6.0.12",
+    "electron": "^6.1.9",
     "electron-builder": "^21.2.0",
     "electron-reload": "^1.5.0",
     "nodemon": "^2.0.3"
   },
   "build": {
-    "appId": "hw3",
+    "appId": "hw1",
     "win": {
       "target": [
         "portable"
       ]
     },
     "extraFiles": [
-      "./dataset"
+      "./case",
+      "./save"
     ]
   }
 }
