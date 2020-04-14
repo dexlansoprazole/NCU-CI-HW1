@@ -91,12 +91,12 @@ function start(save = null) {
   let res = new Array();
   let sensors = getSensors(...Object.values(data.start));
   res.push({...data.start, sensors, handle: 0, save: save ? save[0] : null});
-  for (let i = 0; i < 10000; i++){
+  for (let i = 1; i < (save ? save.length : 10000); i++){
     let {x, y} = res[res.length - 1];
-    if (isCollision(x, y, data.corners) && i !== 0) break;
+    if (isCollision(x, y, data.corners) && i !== 1) break;
     if (isCollision(x, y, finishCorners)) break;
     let prev = res[res.length - 1];
-    res.push(next(prev.x, prev.y, prev.degree, prev.sensors, save ? save[i+1] : null));
+    res.push(next(prev.x, prev.y, prev.degree, prev.sensors, save ? save[i] : null));
   }
   return res;
 }
