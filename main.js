@@ -1,6 +1,7 @@
 const {app, BrowserWindow, Menu, ipcMain} = require('electron')
+const fs = require('fs'); 
 if (!app.isPackaged)
-  require('electron-reload')(__dirname);
+  require('electron-reload')(__dirname, {ignored: /outputs|[\/\\]\./});
 const {fuzzyHandle} = require('./fuzzy');
 
 let mainWindow;
@@ -28,8 +29,15 @@ app.on('ready', function() {
     mainWindow.webContents.send('input_res', data);
   })
 
+  ipcMain.on('load', (evt, arg) => {
+    let save = load(arg.fileString)
+    let res = start(save);
+    mainWindow.webContents.send('load_res', res);
+  })
+
   ipcMain.on('start', (evt, arg) => {
     let res = start();
+    save(res);
     mainWindow.webContents.send('start_res', res);
   })
 
@@ -47,7 +55,7 @@ app.on('activate', function () {
 function parseData(arg) {
   let rawText = arg.fileString;
   let lines = rawText.split("\n");
-  [x, y, degree] = lines[0].trim().split(',').map(v => parseInt(v));
+  [x, y, degree] = lines[0].trim().split(',').map(v => parseFloat(v));
   let start = {x, y, degree};
   let finish = [
     lines[1].trim().split(',').map(v => parseInt(v)),
@@ -69,51 +77,47 @@ function parseData(arg) {
   return {start, finish, corners};
 }
 
-function start() {
+function start(save = null) {
   if (!data)
     return null;
-  
-  let walls = data.corners.map((c, i, a) => {
-    if (i === 0)
-      return null;
-    return [{x: a[i - 1].x, y: a[i - 1].y}, {x: c.x, y: c.y}];
-  }).slice(1, data.corners.length);
-  
-  let finishs = [
+  let finishCorners = [
     {x: data.finish.topLeft.x, y: data.finish.topLeft.y},
     {x: data.finish.bottomRight.x, y: data.finish.topLeft.y},
     {x: data.finish.bottomRight.x, y: data.finish.bottomRight.y},
     {x: data.finish.topLeft.x, y: data.finish.bottomRight.y},
     {x: data.finish.topLeft.x, y: data.finish.topLeft.y}
-  ].map((c, i, a) => {
-    if (i === 0)
-      return null;
-    return [{x: a[i - 1].x, y: a[i - 1].y}, {x: c.x, y: c.y}];
-  }).slice(1, 5);
+  ]
 
   let res = new Array();
   let sensors = getSensors(...Object.values(data.start));
-  res.push({...data.start, sensors});
-  for (let i = 0; i < 100; i++){
+  res.push({...data.start, sensors, handle: 0, save: save ? save[0] : null});
+  for (let i = 0; i < 10000; i++){
     let {x, y} = res[res.length - 1];
-    if (isCollision(x, y, walls) && i !== 0) break;
-    if (isCollision(x, y, finishs)) break;
-    res.push(next(...Object.values(res[res.length - 1])));
+    if (isCollision(x, y, data.corners) && i !== 0) break;
+    if (isCollision(x, y, finishCorners)) break;
+    let prev = res[res.length - 1];
+    res.push(next(prev.x, prev.y, prev.degree, prev.sensors, save ? save[i+1] : null));
   }
   return res;
 }
 
-function next(x, y, degree, sensors) {
-  let theta = toRadians(fuzzyHandle(sensors));
+function next(x, y, degree, sensors, save) {
+  let h = save != null ? save : fuzzyHandle(sensors);
+  let theta = toRadians(h);
   let radian = toRadians(degree);
   x = x + Math.cos(radian + theta) + Math.sin(radian) * Math.sin(theta);
   y = y + Math.sin(radian + theta) - Math.cos(radian) * Math.sin(theta);
   radian = radian - Math.asin(2 * Math.sin(theta) / 6);
-  return {x, y, degree: toDegrees(radian), sensors: getSensors(x, y, toDegrees(radian))};
+  return {x, y, degree: toDegrees(radian), sensors: getSensors(x, y, toDegrees(radian)), handle: h};
 }
 
-function isCollision(x, y, edges) {
+function isCollision(x, y, corners) {
   let res = false;
+  let edges = corners.map((c, i, a) => {
+    if (i === 0)
+      return null;
+    return [{x: a[i - 1].x, y: a[i - 1].y}, {x: c.x, y: c.y}];
+  }).slice(1, corners.length);
   edges.forEach(edge => {
     let footPoint = getFootPoint({x, y}, edge[0], edge[1]);
     if (
@@ -301,4 +305,25 @@ function intersect(p1, q1, p2, q2)
   }
 
   return res; // Doesn't fall in any of the above cases 
+}
+
+function save(result) {
+  let data4D = result.map(r => [r.sensors.center.val, r.sensors.right.val, r.sensors.left.val, r.handle].join(' ')).join('\n');
+  let data6D = result.map(r => [r.x, r.y, r.sensors.center.val, r.sensors.right.val, r.sensors.left.val, r.handle].join(' ')).join('\n');
+  fs.writeFile('./outputs/train4D.txt', data4D, (err) => {
+    if (err)
+      console.log(err);
+  });
+  fs.writeFile('./outputs/train6D.txt', data6D, (err) => {
+    if (err)
+      console.log(err);
+  });
+}
+
+function load(save) {
+  let lines = save.split("\n");
+  return lines.map(l => {
+    let d = l.trim().split(' ').map(v => parseFloat(v))
+    return d[d.length - 1];
+  });
 }

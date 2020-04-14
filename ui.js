@@ -1,9 +1,10 @@
 const ipcRenderer = require('electron').ipcRenderer;
 const path = require('path')
 const fs = require('fs');
-const BLOCK_SIZE = 10;
+const BLOCK_SIZE = 8;
 const PADDING = 100;
-var path_map = "./map";
+var path_case = "./case";
+var path_save = "./save";
 var data = null;
 var result = null;
 
@@ -16,18 +17,29 @@ document.addEventListener("keydown", function(e) {
 });
 
 function readFile(filepath, filename) {
-  $('#inputFile-label-map').html(filename);
+  $('#inputFile-label-case').html(filename);
+  $('#inputFile-label-save').html('');
   let fileString = fs.readFileSync(filepath, "UTF-8");
   ipcRenderer.send('input', {fileString: fileString});
 }
 
-function clear() {
+function loadFile(filepath, filename) {
+  $('#inputFile-label-save').html(filename);
+  let fileString = fs.readFileSync(filepath, "UTF-8");
+  ipcRenderer.send('load', {fileString: fileString});
+}
+
+function reset() {
   $('#draw-result').empty();
+  $('#text-left-sensor').val(null);
+  $('#text-center-sensor').val(null);
+  $('#text-right-sensor').val(null);
 }
 
 function updateResult() {
   if (data == null) return;
-  clear();
+  reset();
+
   let svg = $('#draw-result').svg('get');
   let min = {
     x: Math.min(...data.corners.map(c => c.x)),
@@ -76,7 +88,16 @@ function updateResult() {
           svgStroke: color,
           svgCx: getCoordinate(r.x, r.y, offset, svg)[0],
           svgCy: getCoordinate(r.x, r.y, offset, svg)[1]
-        }, 50);
+        }, {
+            duration: 50,
+            start: () => {
+              $('#text-left-sensor').val(r.sensors.left.val);
+              $('#text-center-sensor').val(r.sensors.center.val);
+              $('#text-right-sensor').val(r.sensors.right.val);
+              $('#range').val(i);
+              $('#step').html(i+1);
+            }
+        });
         $(line).animate({
           svgStroke: color,
           svgX1: getCoordinate(r.x, r.y, offset, svg)[0],
@@ -99,6 +120,56 @@ function updateResult() {
   }
 }
 
+function drawStep(step) {
+  if (result == null) return;
+  $('#draw-result').empty();
+  let svg = $('#draw-result').svg('get');
+  let min = {
+    x: Math.min(...data.corners.map(c => c.x)),
+    y: Math.min(...data.corners.map(c => c.y))
+  }
+  let width = (Math.max(...data.corners.map(c => c.x)) - min.x) * BLOCK_SIZE + PADDING * 2;
+  let height = (Math.max(...data.corners.map(c => c.y)) - min.y) * BLOCK_SIZE + PADDING * 2;
+  let offset = {
+    x: min.x < 0 ? (-min.x) * BLOCK_SIZE : 0,
+    y: min.y < 0 ? (-min.y) * BLOCK_SIZE : 0
+  }
+  $(svg.root()).width(width);
+  $(svg.root()).height(height);
+
+  // Draw track
+  svg.polyline(
+    data.corners.map(c => getCoordinate(c.x, c.y, offset, svg)),
+    {fill: 'none', stroke: 'black', strokeWidth: 1}
+  );
+  for (corner of data.corners) {
+    svg.circle(...getCoordinate(corner.x, corner.y, offset, svg), 1, {fill: 'black', stroke: 'black', strokeWidth: 5});
+  }
+
+  // Draw finish area
+  svg.rect(
+    ...getCoordinate(data.finish.topLeft.x, data.finish.topLeft.y, offset, svg),
+    Math.abs(data.finish.bottomRight.x - data.finish.topLeft.x) * BLOCK_SIZE, Math.abs(data.finish.bottomRight.y - data.finish.topLeft.y) * BLOCK_SIZE,
+    0, 0,
+    {fill: 'none', stroke: 'red', strokeWidth: 1}
+  );
+
+  // Draw car
+  let r = result[step];
+  let color = (step == result.length - 1 ? 'red' : 'green');
+  $('#text-left-sensor').val(r.sensors.left.val);
+  $('#text-center-sensor').val(r.sensors.center.val);
+  $('#text-right-sensor').val(r.sensors.right.val);
+  $('#range').val(step);
+  $('#step').html(step+1);
+  svg.circle(...getCoordinate(r.x, r.y, offset, svg), 3 * BLOCK_SIZE, {fill: 'none', stroke: color, strokeWidth: 2});
+  svg.line(
+    ...getCoordinate(r.x, r.y, offset, svg),
+    ...getCoordinate(r.x, r.y + 6, offset, svg),
+    {stroke: color, strokeWidth: 2, transform: 'rotate(' + (90 - r.degree) + ', ' + getCoordinate(r.x, r.y, offset, svg).toString() + ')'}
+  );
+}
+
 function getCoordinate(x, y, offset, svg) {
   return [PADDING + offset.x + x * BLOCK_SIZE, $(svg.root()).height() - (PADDING + offset.y + y * BLOCK_SIZE)];
 }
@@ -107,8 +178,26 @@ ipcRenderer.on('input_res', function(evt, arg){
   console.log('data:', arg);
   data = arg;
   result = null;
-  $('#draw-result').svg({onLoad: updateResult});
-  updateResult();
+  ipcRenderer.send('start');
+});
+
+ipcRenderer.on('load_res', function(evt, arg) {
+  if (!arg)
+    return;
+  console.log('result:', arg);
+  result = arg;
+  $('#range').attr('max', result.length - 1);
+  $('#range').off('input');
+  $('#range').on('input', evt => {
+    let r = result[evt.target.value];
+    $('#text-left-sensor').val(r.sensors.left.val);
+    $('#text-center-sensor').val(r.sensors.center.val);
+    $('#text-right-sensor').val(r.sensors.right.val);
+    $('step').html(evt.target.value);
+    drawStep(parseInt(evt.target.value));
+  })
+  $('#draw-result').svg({onLoad: () => drawStep(0)});
+  drawStep(0)
 });
 
 ipcRenderer.on('start_res', function(evt, arg) {
@@ -116,14 +205,25 @@ ipcRenderer.on('start_res', function(evt, arg) {
     return;
   console.log('result:', arg);
   result = arg;
-  updateResult();
+  $('#range').attr('max', result.length - 1);
+  $('#range').off('input');
+  $('#range').on('input', evt => {
+    let r = result[evt.target.value];
+    $('#text-left-sensor').val(r.sensors.left.val);
+    $('#text-center-sensor').val(r.sensors.center.val);
+    $('#text-right-sensor').val(r.sensors.right.val);
+    $('step').html(evt.target.value);
+    drawStep(parseInt(evt.target.value));
+  })
+  $('#draw-result').svg({onLoad: () => drawStep(0)});
+  drawStep(0)
 });
 
 $('#btnStart').click(function () {
-  ipcRenderer.send('start');
+  updateResult();
 });
 
-$('.inputFile').change(function () {
+$('#inputFile-case').change(function () {
   if ($(this).prop('files')[0]) {
     let inputFile = $(this).prop('files')[0];
     $(this).val('');
@@ -131,19 +231,35 @@ $('.inputFile').change(function () {
   }
 });
 
-$(window).resize(function() {
-  $('#draw-result').svg({onLoad: updateResult});
+$('#inputFile-save').change(function() {
+  if ($(this).prop('files')[0]) {
+    let inputFile = $(this).prop('files')[0];
+    $(this).val('');
+    loadFile(inputFile.path, inputFile.name);
+  }
 });
 
-fs.readdir(path_map, function(err, items) {
+fs.readdir(path_case, function(err, items) {
   items.forEach(item => {
-    let $dropdown_item_map = $($.parseHTML('<a class="dropdown-item dropdown-item-map" href="#" filename="' + item + '" filepath="' + path.join(path_map, item) + '">' + item.slice(0, -4) + '</a>'));
-    $dropdown_item_map.click(function () {
+    let $dropdown_item_case = $($.parseHTML('<a class="dropdown-item dropdown-item-case" href="#" filename="' + item + '" filepath="' + path.join(path_case, item) + '">' + item.slice(0, -4) + '</a>'));
+    $dropdown_item_case.click(function () {
       let filename = $(this).attr('filename');
       let filepath = $(this).attr('filepath');
       readFile(filepath, filename);
     });
-    $('#dropdown-menu-map').append($dropdown_item_map);
+    $('#dropdown-menu-case').append($dropdown_item_case);
   });
 });
-readFile('./map/case01.txt', 'case01.txt');
+
+fs.readdir(path_save, function(err, items) {
+  items.forEach(item => {
+    let $dropdown_item_save = $($.parseHTML('<a class="dropdown-item dropdown-item-save" href="#" filename="' + item + '" filepath="' + path.join(path_save, item) + '">' + item.slice(0, -4) + '</a>'));
+    $dropdown_item_save.click(function() {
+      let filename = $(this).attr('filename');
+      let filepath = $(this).attr('filepath');
+      loadFile(filepath, filename);
+    });
+    $('#dropdown-menu-save').append($dropdown_item_save);
+  });
+});
+readFile('./case/case01.txt', 'case01.txt');
