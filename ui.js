@@ -36,7 +36,7 @@ function reset() {
   $('#text-right-sensor').val(null);
 }
 
-function updateResult() {
+function updateResult(mode = 'animate') {
   if (data == null) return;
   reset();
 
@@ -81,31 +81,49 @@ function updateResult() {
   
   if (result) {
     result.forEach((r, i, a) => {
-      // move car
       let color = (i === a.length - 1 ? 'red' : 'green');
-      if (i !== 0) {
-        $(circle).animate({
-          svgStroke: color,
-          svgCx: getCoordinate(r.x, r.y, offset, svg)[0],
-          svgCy: getCoordinate(r.x, r.y, offset, svg)[1]
-        }, {
-            duration: 50,
-            start: () => {
-              $('#text-left-sensor').val(r.sensors.left.val);
-              $('#text-center-sensor').val(r.sensors.center.val);
-              $('#text-right-sensor').val(r.sensors.right.val);
-              $('#range').val(i);
-              $('#step').html(i+1);
-            }
-        });
-        $(line).animate({
-          svgStroke: color,
-          svgX1: getCoordinate(r.x, r.y, offset, svg)[0],
-          svgY1: getCoordinate(r.x, r.y, offset, svg)[1],
-          svgX2: getCoordinate(r.x, r.y+6, offset, svg)[0],
-          svgY2: getCoordinate(r.x, r.y+6, offset, svg)[1],
-          svgTransform: 'rotate(' + (90 - r.degree) + ', ' + getCoordinate(r.x, r.y, offset, svg).toString() + ')'
-        }, 50);
+      switch (mode) {
+        case 'animate':
+          // move car
+          if (i !== 0) {
+            $(circle).animate({
+              svgStroke: color,
+              svgCx: getCoordinate(r.x, r.y, offset, svg)[0],
+              svgCy: getCoordinate(r.x, r.y, offset, svg)[1]
+            }, {
+              duration: 50,
+              start: () => {
+                $('#text-left-sensor').val(r.sensors.left.val);
+                $('#text-center-sensor').val(r.sensors.center.val);
+                $('#text-right-sensor').val(r.sensors.right.val);
+                $('#range').val(i);
+                $('#step').html(i + 1);
+              }
+            });
+            $(line).animate({
+              svgStroke: color,
+              svgX1: getCoordinate(r.x, r.y, offset, svg)[0],
+              svgY1: getCoordinate(r.x, r.y, offset, svg)[1],
+              svgX2: getCoordinate(r.x, r.y + 6, offset, svg)[0],
+              svgY2: getCoordinate(r.x, r.y + 6, offset, svg)[1],
+              svgTransform: 'rotate(' + (90 - r.degree) + ', ' + getCoordinate(r.x, r.y, offset, svg).toString() + ')'
+            }, 50);
+          }
+          break;
+        case 'path':
+          // Draw path
+          $('#text-left-sensor').val(r.sensors.left.val);
+          $('#text-center-sensor').val(r.sensors.center.val);
+          $('#text-right-sensor').val(r.sensors.right.val);
+          $('#range').val(i);
+          $('#step').html(i + 1);
+          svg.circle(...getCoordinate(r.x, r.y, offset, svg), 3 * BLOCK_SIZE, {fill: 'none', stroke: color, strokeWidth: 2});
+          svg.line(
+            ...getCoordinate(r.x, r.y, offset, svg),
+            ...getCoordinate(r.x, r.y + 6, offset, svg),
+            {stroke: color, strokeWidth: 2, transform: 'rotate(' + (90 - r.degree) + ', ' + getCoordinate(r.x, r.y, offset, svg).toString() + ')'}
+          );
+          break;
       }
 
       // Draw sensors
@@ -221,6 +239,10 @@ ipcRenderer.on('start_res', function(evt, arg) {
 
 $('#btnStart').click(function () {
   updateResult();
+});
+
+$('#btnPath').click(function() {
+  updateResult('path');
 });
 
 $('#inputFile-case').change(function () {
