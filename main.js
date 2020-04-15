@@ -90,25 +90,25 @@ function start(save = null) {
 
   let res = new Array();
   let sensors = getSensors(...Object.values(data.start));
-  res.push({...data.start, sensors, handle: 0, save: save ? save[0] : null});
+  res.push({...data.start, sensors, handle: save ? save[0] : fuzzyHandle(sensors)});
   for (let i = 1; i < (save ? save.length : 10000); i++){
     let {x, y} = res[res.length - 1];
-    if (isCollision(x, y, data.corners) && i !== 1) break;
-    if (isCollision(x, y, finishCorners)) break;
+    if (!save && isCollision(x, y, data.corners) && i !== 1) break;
+    if (!save && isCollision(x, y, finishCorners)) break;
     let prev = res[res.length - 1];
-    res.push(next(prev.x, prev.y, prev.degree, prev.sensors, save ? save[i] : null));
+    res.push(next(prev.x, prev.y, prev.degree, prev.handle, save ? save[i] : null));
   }
   return res;
 }
 
-function next(x, y, degree, sensors, save) {
-  let h = save != null ? save : fuzzyHandle(sensors);
-  let theta = toRadians(h);
+function next(x, y, degree, handle, save) {
+  let theta = toRadians(handle);
   let radian = toRadians(degree);
   x = x + Math.cos(radian + theta) + Math.sin(radian) * Math.sin(theta);
   y = y + Math.sin(radian + theta) - Math.cos(radian) * Math.sin(theta);
   radian = radian - Math.asin(2 * Math.sin(theta) / 6);
-  return {x, y, degree: toDegrees(radian), sensors: getSensors(x, y, toDegrees(radian)), handle: h};
+  let sensors = getSensors(x, y, toDegrees(radian));
+  return {x, y, degree: toDegrees(radian), sensors, handle: save != null ? save : fuzzyHandle(sensors)};
 }
 
 function isCollision(x, y, corners) {
