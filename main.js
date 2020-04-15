@@ -310,6 +310,8 @@ function intersect(p1, q1, p2, q2)
 function save(result) {
   let data4D = result.map(r => [r.sensors.center.val, r.sensors.right.val, r.sensors.left.val, r.handle].join(' ')).join('\n');
   let data6D = result.map(r => [r.x, r.y, r.sensors.center.val, r.sensors.right.val, r.sensors.left.val, r.handle].join(' ')).join('\n');
+  if (!fs.exists('./outputs', (err) => console.log(err)))
+    fs.mkdir('./outputs', (err) => console.log(err));
   fs.writeFile('./outputs/train4D.txt', data4D, (err) => {
     if (err)
       console.log(err);
