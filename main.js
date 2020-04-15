@@ -311,7 +311,7 @@ function intersect(p1, q1, p2, q2)
 function save(result) {
   let data4D = result.map(r => [r.sensors.center.val, r.sensors.right.val, r.sensors.left.val, r.handle].join(' ')).join('\n');
   let data6D = result.map(r => [r.x, r.y, r.sensors.center.val, r.sensors.right.val, r.sensors.left.val, r.handle].join(' ')).join('\n');
-  let appPath = app.getAppPath();
+  let appPath = process.env.PORTABLE_EXECUTABLE_DIR;
   fs.exists(path.join(appPath, 'outputs'), (exists) => {
     if (!exists)
       fs.mkdir(path.join(appPath, 'outputs'), err => {
