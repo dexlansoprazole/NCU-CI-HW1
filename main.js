@@ -311,22 +311,11 @@ function intersect(p1, q1, p2, q2)
 function save(result) {
   let data4D = result.map(r => [r.sensors.center.val, r.sensors.right.val, r.sensors.left.val, r.handle].join(' ')).join('\n');
   let data6D = result.map(r => [r.x, r.y, r.sensors.center.val, r.sensors.right.val, r.sensors.left.val, r.handle].join(' ')).join('\n');
-  let appPath = process.env.PORTABLE_EXECUTABLE_DIR;
-  fs.exists(path.join(appPath, 'outputs'), (exists) => {
-    if (!exists)
-      fs.mkdir(path.join(appPath, 'outputs'), err => {
-        if (err)
-          handleError(err);
-      });
-  });
-  fs.writeFile(path.join(appPath, 'outputs', 'train4D.txt'), data4D, err => {
-    if (err)
-      handleError(err);
-  });
-  fs.writeFile(path.join(appPath, 'outputs', 'train6D.txt'), data6D, err => {
-    if (err)
-      handleError(err);
-  });
+  let outputPath = app.isPackaged ? path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'outputs') : './outputs';
+  if (!fs.existsSync(outputPath))
+    fs.mkdirSync(outputPath);
+  fs.writeFileSync(path.join(outputPath, 'train4D.txt'), data4D);
+  fs.writeFileSync(path.join(outputPath, 'train6D.txt'), data6D);
 }
 
 function load(save) {
@@ -335,9 +324,4 @@ function load(save) {
     let d = l.trim().split(' ').map(v => parseFloat(v))
     return d[d.length - 1];
   });
-}
-
-function handleError(err) {
-  console.log(err)
-  dialog.showErrorBox('Error', err);
 }
