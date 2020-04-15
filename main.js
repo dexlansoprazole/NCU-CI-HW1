@@ -1,5 +1,6 @@
 const {app, BrowserWindow, Menu, ipcMain, dialog} = require('electron')
 const fs = require('fs'); 
+const path = require('path'); 
 if (!app.isPackaged)
   require('electron-reload')(__dirname, {ignored: /outputs|[\/\\]\./});
 const {fuzzyHandle} = require('./fuzzy');
@@ -310,18 +311,19 @@ function intersect(p1, q1, p2, q2)
 function save(result) {
   let data4D = result.map(r => [r.sensors.center.val, r.sensors.right.val, r.sensors.left.val, r.handle].join(' ')).join('\n');
   let data6D = result.map(r => [r.x, r.y, r.sensors.center.val, r.sensors.right.val, r.sensors.left.val, r.handle].join(' ')).join('\n');
-  fs.exists('./outputs', (exists) => {
+  let appPath = app.getAppPath();
+  fs.exists(path.join(appPath, 'outputs'), (exists) => {
     if (!exists)
-      fs.mkdir('./outputs', err => {
+      fs.mkdir(path.join(appPath, 'outputs'), err => {
         if (err)
           handleError(err);
       });
   });
-  fs.writeFile('./outputs/train4D.txt', data4D, err => {
+  fs.writeFile(path.join(appPath, 'outputs', 'train4D.txt'), data4D, err => {
     if (err)
       handleError(err);
   });
-  fs.writeFile('./outputs/train6D.txt', data6D, err => {
+  fs.writeFile(path.join(appPath, 'outputs', 'train6D.txt'), data6D, err => {
     if (err)
       handleError(err);
   });
