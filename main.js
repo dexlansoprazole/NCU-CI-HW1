@@ -1,4 +1,4 @@
-const {app, BrowserWindow, Menu, ipcMain, dialog} = require('electron')
+const {app, BrowserWindow, Menu, ipcMain} = require('electron')
 const fs = require('fs'); 
 const path = require('path'); 
 if (!app.isPackaged)
