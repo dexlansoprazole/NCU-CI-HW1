@@ -101,5 +101,6 @@ $$
 其中 $\mu(y_j) = \underset{y \in Y}{max}\mu(y), j=1,\cdots,N$
 
 # 實驗結果
-![case01輸出結果](img/img2.png)
 + case01輸出結果
+  
+  ![case01輸出結果](img/img2.png)
