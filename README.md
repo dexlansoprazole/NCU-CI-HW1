@@ -11,7 +11,7 @@
 3. 按下 Start 按鈕開始播放自走車移動軌跡。
 4. 按下 Path 按鈕顯示自走車移動軌跡。
 5. 拖動 Step 滑條顯示每一時刻的自走車位置。
-![程式介面說明](img/img1.png)
+![程式使用者介面](img/img1.png)
 
 # 程式說明
 ## 碰撞檢測
@@ -99,3 +99,7 @@ $$
 y^* = \frac{1}{N}\sum^N_{j=1}y_j
 $$
 其中 $\mu(y_j) = \underset{y \in Y}{max}\mu(y), j=1,\cdots,N$
+
+# 實驗結果
+![case01輸出結果](img/img2.png)
++ case01輸出結果
