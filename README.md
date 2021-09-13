@@ -33,6 +33,7 @@
 # 模糊規則設計
 ## 歸屬函數
 1. Center is close (中央感測器接近)
+<img src="http://latex.codecogs.com/gif.latex?\frac{\partial J}{\partial \theta_k^{(j)}}=\sum_{i:r(i,j)=1}{\big((\theta^{(j)})^Tx^{(i)}-y^{(i,j)}\big)x_k^{(i)}}+\lambda \theta_k^{(j)}" />
 $$
 \mu_{cc}(x)=
 \begin{cases}
@@ -41,7 +42,7 @@ $$
 0, &x>5
 \end{cases}
 $$
-2. Left is close (左方感測器接近)
+1. Left is close (左方感測器接近)
 $$
 \mu_{lc}(x)=
 \begin{cases}
@@ -96,4 +97,4 @@ $$
 $$
 y^* = \frac{1}{N}\sum^N_{j=1}y_j
 $$
-其中 $\mu(y_j) = \underset{y \isin Y}{max}\mu(y), j=1,\cdots,N$
+其中 $\mu(y_j) = \underset{y \in Y}{max}\mu(y), j=1,\cdots,N$
