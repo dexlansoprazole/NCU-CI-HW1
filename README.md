@@ -3,6 +3,8 @@
 
 以模糊系統實現自走車模擬
 
+*You can install browser extensions like [this](https://chrome.google.com/webstore/detail/mathjax-plugin-for-github/ioemnmodlmafdkllaclgeombjnmnbima) to render math equations.
+
 # 使用方法
 1. 選擇軌道資料: 以下拉選單選擇預置軌道資料，或直接選擇檔案。
 2. 選擇紀錄資料: 以下拉選單選擇預置紀錄資料，或直接選擇檔案。
